@@ -85,6 +85,23 @@ export function modelsFor(brand) {
     return Object.prototype.hasOwnProperty.call(PRINTERS, brand) ? PRINTERS[brand] : [];
 }
 
+/**
+ * Official setup (unboxing) pages, only where the link has been checked: `${brand}|${model}`
+ * -> { plain, combo }. `combo` is the page for the bundle that includes an AMS.
+ */
+const SETUP_GUIDES = {
+    'bambu|P1S': {
+        plain: { label: 'Bambu Lab wiki: Unboxing P1S', url: 'https://wiki.bambulab.com/en/p1/manual/unboxing-p1s' },
+        combo: { label: 'Bambu Lab wiki: Unboxing P1S Combo (with AMS)', url: 'https://wiki.bambulab.com/en/p1/manual/unboxing-p1s_combo' }
+    }
+};
+
+/** The setup page to link for a printer: the Combo page when an AMS is set up, else the plain one; null if none is known. */
+export function setupGuideFor(brand, model, hasAms) {
+    const g = SETUP_GUIDES[`${brand}|${model}`];
+    return g ? (hasAms ? g.combo : g.plain) : null;
+}
+
 export function findPrinter(brand, model) {
     return modelsFor(brand).find((p) => p.model === model) || null;
 }

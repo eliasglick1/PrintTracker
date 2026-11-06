@@ -1,3 +1,4 @@
+import { setupGuideFor } from './catalog.js';
 import { Sections } from './constants.js';
 import { openPrintPopup } from './printPopup.js';
 import { makeBadge, renderAll } from './render.js';
@@ -5,14 +6,21 @@ import { openSettings } from './settings.js';
 import { openSpoolPopup } from './spoolPopup.js';
 import { saveState, state } from './state.js';
 import { showTab } from './tabs.js';
-import { $, h, isObject } from './util.js';
+import { $, h, isObject, makeLink } from './util.js';
 
 // ---------- Getting started: a short checklist for anyone new to the app ----------
 
 /** The steps, with whether each one is done (worked out from what is already saved) and what its button does. */
 export function guideSteps() {
     const spools = Object.values(state.spools).filter(isObject);
+    const pr = state.settings.printer;
+    const setup = setupGuideFor(pr.brand, pr.model, Object.keys(state.ams || {}).length > 0);
     return [
+        ...(setup ? [{
+            id: 'setup', title: 'Set up your printer',
+            text: 'Out of the box? The maker\'s own step-by-step guide covers unpacking, first power-on and linking it to the app.',
+            done: false, required: false, link: setup
+        }] : []),
         {
             id: 'printer', title: 'Pick your printer',
             text: 'Choose the brand and model in Settings. It fills in power use and price for cost estimates. Skip it if your printer is not listed.',
@@ -88,7 +96,11 @@ export function buildGuidePanel() {
         body.appendChild(title);
         body.appendChild(h('span', 'guide-text', step.text));
         li.appendChild(body);
-        if (step.done) {
+        if (step.link) {
+            const a = makeLink(step.link.url, step.link.label);
+            a.classList.add('guide-link');
+            li.appendChild(a);
+        } else if (step.done) {
             li.appendChild(makeBadge('Done', 'green'));
         } else {
             const go = h('button', 'btn btn-outline btn-small', step.action);

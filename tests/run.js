@@ -4487,6 +4487,24 @@ const msg = () => q(w, '#data-message').textContent;
         check('no unexpected errors in section 73', errors.length === e, errors.slice(e).join(' | '));
     }
 
+    console.log('\n[74] Setup link in the start guide');
+    {
+        const e = errors.length;
+        const mk = (brand, model, ams) => JSON.stringify({ schemaVersion: 1, prints: {}, spools: { a: { brand: 'X', material: 'pla', color: 'Y', startGrams: 1000, price: 10, date: '2026-09-01' } },
+            settings: { printer: { brand, model } }, ams: ams ? { u1: { name: 'AMS 1', type: 'ams', slots: ['a', '', '', ''] } } : {} });
+        const link = (w) => q(w, '#guide-panel [data-step="setup"] a');
+        const w1 = boot(mk('bambu', 'P1S', false));
+        check('a Bambu P1S gets the setup step with the unboxing page', !!link(w1) && link(w1).href === 'https://wiki.bambulab.com/en/p1/manual/unboxing-p1s' && link(w1).target === '_blank' && link(w1).rel.includes('noopener'), link(w1) && link(w1).href);
+        check('it is optional and does not count towards the required steps', q(w1, '[data-step="setup"] .guide-title').textContent.includes('(optional)') && /^\d of 4 steps done$/.test(q(w1, '#guide-progress').textContent), q(w1, '#guide-progress').textContent);
+        const w2 = boot(mk('bambu', 'P1S', true));
+        check('with an AMS set up it links the Combo page instead', link(w2) && link(w2).href === 'https://wiki.bambulab.com/en/p1/manual/unboxing-p1s_combo', link(w2) && link(w2).href);
+        const w3 = boot(mk('bambu', 'A1', false));
+        check('other models without a checked link show no setup step', !q(w3, '[data-step="setup"]'));
+        const w4 = boot(mk('', '', false));
+        check('no printer chosen: no setup step', !q(w4, '[data-step="setup"]') && qa(w4, '#guide-panel .guide-step').length === 5);
+        check('no unexpected errors in section 74', errors.length === e, errors.slice(e).join(' | '));
+    }
+
     console.log(`\n==== ${passed} passed, ${failed} failed, ${errors.length} unexpected error(s) ====`);
     if (failures.length) console.log('FAILED:\n - ' + failures.join('\n - '));
     if (errors.length) console.log('ERRORS:\n' + errors.join('\n'));
