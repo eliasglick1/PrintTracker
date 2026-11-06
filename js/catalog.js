@@ -212,6 +212,19 @@ export function findSet(key) {
     return MAINT_SETS.find((s) => s.key === key) || null;
 }
 
+/**
+ * The maker's page for an upkeep task that came from a built-in set, or null. A task counts when its name
+ * matches an item the maker's docs give (src 'official') in the set for its printer, so renamed or custom
+ * tasks, and printers with no brand chosen, get no link.
+ */
+export function docsLinkForTask(name, brand, model) {
+    if (!brand || brand === 'other') return null;
+    const set = findSet(defaultSetFor(brand, model));
+    const wanted = String(name).trim().toLowerCase();
+    const hit = set && set.source && set.items.some((i) => i.src === 'official' && i.name.toLowerCase() === wanted);
+    return hit ? set.source : null;
+}
+
 /** The upkeep set to show first for the printer in Settings. */
 export function defaultSetFor(brand, model) {
     const p = findPrinter(brand, model);

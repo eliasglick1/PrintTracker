@@ -1014,6 +1014,7 @@ html[data-motion="off"] #bg *, html[data-motion="off"] #bg { animation: none !im
 .maint-list .maint-row:first-child, .panel-title + .maint-row, .subhead + .maint-row { border-top: 0; }
 .maint-top { display: flex; align-items: center; gap: 10px; }
 .maint-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.maint-docs { align-self: flex-start; font-size: 13px; }
 .maint-row .bar { margin-top: 8px; }
 .bar-thin { height: 6px; }
 .maint-row.is-due .list-sub { color: var(--danger); font-weight: 600; }

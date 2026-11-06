@@ -1,5 +1,5 @@
 import { autoBackupRecent } from './autoBackup.js';
-import { BRANDS } from './catalog.js';
+import { BRANDS, docsLinkForTask } from './catalog.js';
 import { calcStats, upkeepDays, effectivePrice, hardwareCost, hasManyPrinters, printerCfg, printerIds, printerStats } from './calc.js';
 import { SPOOL_GRAMS, UNIT_LABELS } from './constants.js';
 import { dashPanel } from './dashboard.js';
@@ -7,7 +7,7 @@ import { exportData } from './data.js';
 import { plural, renderAll } from './render.js';
 import { openSettings } from './settings.js';
 import { saveState, state } from './state.js';
-import { daysBetween, fmtDuration, fmtMoney, fmtNum, formatDate, h, icon, notify, todayLocal } from './util.js';
+import { daysBetween, fmtDuration, fmtMoney, fmtNum, formatDate, h, icon, makeLink, notify, todayLocal } from './util.js';
 
 // ---------- Dashboard pieces: backup reminder, printer, achievements ----------
 
@@ -137,6 +137,15 @@ export function buildMaintenanceRow(m, { withDelete = false } = {}) {
     text.appendChild(h('span', 'list-title', m.task.name));
     text.appendChild(h('span', 'list-sub',
         `${fmtNum(m.used)} of ${fmtNum(m.task.every)} ${UNIT_LABELS[m.task.unit]} \u00B7 ${maintenanceText(m)}`));
+    const pr = printerCfg(m.task.printerId || '');
+    const docs = docsLinkForTask(m.task.name, pr.brand, pr.model);
+    if (docs) {
+        const a = makeLink(docs.url, 'How to');
+        a.classList.add('maint-docs');
+        a.title = docs.text;
+        a.setAttribute('aria-label', `How to: ${m.task.name} (${docs.text}, opens in a new tab)`);
+        text.appendChild(a);
+    }
     top.appendChild(text);
 
     const done = h('button', m.due ? 'btn btn-primary btn-small' : 'btn btn-outline btn-small', 'Done');

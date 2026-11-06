@@ -21,6 +21,8 @@ function check(name, cond, extra) {
     else { failed++; failures.push(name); console.log('  FAIL ' + name + (extra !== undefined ? '  -> ' + extra : '')); }
 }
 
+const openWindows = [];
+const KEEP_WINDOWS = 12;   // more than any one test section uses at once
 function boot(storedJson, extra) {
     const vc = new VirtualConsole();
     vc.on('jsdomError', (e) => errors.push('jsdomError: ' + (e.detail && e.detail.stack || e.message)));
@@ -45,6 +47,9 @@ function boot(storedJson, extra) {
         }
     });
     try { dom.window.eval(js); } catch (e) { errors.push('LOAD ERROR: ' + e.stack); }
+    // Free old pages: the suite boots hundreds, and jsdom keeps each one alive until it is closed.
+    openWindows.push(dom.window);
+    while (openWindows.length > KEEP_WINDOWS) { try { openWindows.shift().close(); } catch (e) { /* already closed */ } }
     return dom.window;
 }
 
@@ -4503,6 +4508,34 @@ const msg = () => q(w, '#data-message').textContent;
         const w4 = boot(mk('', '', false));
         check('no printer chosen: no setup step', !q(w4, '[data-step="setup"]') && qa(w4, '#guide-panel .guide-step').length === 5);
         check('no unexpected errors in section 74', errors.length === e, errors.slice(e).join(' | '));
+    }
+
+    console.log('\n[75] Official how-to link on upkeep tasks');
+    {
+        const e = errors.length;
+        const task = (name) => ({ name, unit: 'days', every: 30, lastDate: '2026-10-01', atHours: 0, atPrints: 0, atGrams: 0 });
+        const mk = (brand, model, names) => JSON.stringify({ schemaVersion: 1, prints: {}, spools: {}, settings: { printer: { brand, model } },
+            maintenance: Object.fromEntries(names.map((n, i) => ['t' + i, task(n)])) });
+        const rowFor = (w, n) => qa(w, '.maint-row').find((r) => r.textContent.includes(n));
+        const w1 = boot(mk('bambu', 'P1S', ['Check the PTFE tube', 'Wipe my own thing']));
+        click(w1, q(w1, '#upkeep-button'));
+        const a = q(w1, '.maint-docs', rowFor(w1, 'PTFE'));
+        check('a task from the P1S set links its maker page (new tab, noopener)', !!a && a.href === 'https://wiki.bambulab.com/en/x1/maintenance/basic-maintenance' && a.target === '_blank' && a.rel.includes('noopener'), a && a.href);
+        check('the link has an accessible name that says which task', a.getAttribute('aria-label').includes('Check the PTFE tube') && a.getAttribute('aria-label').includes('new tab'));
+        check('a custom task gets no link', !q(w1, '.maint-docs', rowFor(w1, 'Wipe my own thing')));
+        const w2 = boot(mk('bambu', 'A1', ['Clean and oil the X rail']));
+        click(w2, q(w2, '#upkeep-button'));
+        check('an A1 task links the A1 page', q(w2, '.maint-docs').href === 'https://wiki.bambulab.com/en/a1/maintenance/basic-maintenance');
+        const w3 = boot(mk('bambu', 'A1', ['Check the PTFE tube']));
+        click(w3, q(w3, '#upkeep-button'));
+        check('a task from another printer\'s set (P1 name on an A1) gets no link', !q(w3, '.maint-docs'));
+        const w4 = boot(mk('', '', ['Check the PTFE tube']));
+        click(w4, q(w4, '#upkeep-button'));
+        check('with no printer chosen there is no link', !q(w4, '.maint-docs'));
+        const w5 = boot(mk('bambu', 'P1S', ['check the ptfe tube ']));
+        click(w5, q(w5, '#upkeep-button'));
+        check('names match ignoring case and spaces', !!q(w5, '.maint-docs'));
+        check('no unexpected errors in section 75', errors.length === e, errors.slice(e).join(' | '));
     }
 
     console.log(`\n==== ${passed} passed, ${failed} failed, ${errors.length} unexpected error(s) ====`);
