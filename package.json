@@ -4,7 +4,7 @@
   "private": true,
   "description": "A personal 3D print and filament tracker (plain HTML, CSS and JavaScript). This package.json is only for the tests; the app itself has no build step.",
   "scripts": {
-    "test": "node tests/run.js",
+    "test": "node --max-old-space-size=4096 tests/run.js",
     "test:e2e": "node tests/e2e.js",
     "lint": "eslint js tests"
   },
